@@ -18,7 +18,40 @@ precision <- function(r, docs) {
 
 precision(4, docs > .5)
 precision(2, docs > .5)
+precision(1, docs > .5)
 
+# Recall ---------------------------------------------------------------
+
+#' requies incoming `docs` are scaled to binary (1 = relevant)
+#' @param r The rank of a document in results set
+#' @param docs The relevancy scores of the doc set
+recall <- function(r, docs) {
+  total_rel <- sum(docs)
+  doc_subset <- docs[1:r]
+  
+  sum(doc_subset) / total_rel
+}
+
+recall(4, docs > .5)
+recall(1, docs > .5)
+
+
+# Average Precision -------------------------------------------------------
+
+avg_precision <- function(r, docs) {
+  doc_subset <- docs[1:r]
+  
+  vals_to_avg <- vector("numeric", length(doc_subset))
+    
+  for (i in seq_along(doc_subset)) {
+    vals_to_avg[i] <- precision(i, doc_subset)
+  }
+  
+  sum(vals_to_avg) / length(doc_subset)
+  
+}
+
+avg_precision(2, docs > .5)
 
 # satisfied -------
 
@@ -93,7 +126,7 @@ dcg <- function(r, docs) {
   
   for (i in seq_along(doc_subset)) {
     
-    scores_to_sum[i] <- (2^docs[i] - 1) / (log(i + 1))
+    scores_to_sum[i] <- (2^docs[i] - 1) / (log(i + 1, base = 2))
     
   }
   sum(scores_to_sum)
@@ -104,6 +137,25 @@ dcg(2, docs)
 bad_docs <- rev(docs)
 
 dcg(2, bad_docs)
+
+# Normalized DCG ---------------------------------------------------------
+# goal: Pull DCG back into 0-1 range
+# this implements localized DCG (highest rank in results returned)
+
+ndcg <- function(r, docs) {
+  
+  real <- dcg(r, docs)
+  ideal <- dcg(r, sort(docs, decreasing = TRUE))
+  
+  real / ideal
+  
+}
+
+ndcg(2, docs)
+
+bad_docs <- rev(docs)
+
+ndcg(3, bad_docs)
 
 
 # Rank based precision ---------------------------------------------------------
