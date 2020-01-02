@@ -1,3 +1,4 @@
+library(shinythemes)
 library(plotly)
 library(tidyverse)
 library(shiny)
@@ -5,12 +6,12 @@ library(shiny)
 source("algo_scratch.R")
 
 colores <- RColorBrewer::brewer.pal(8, "Dark2") %>% 
-    set_names(c("precision", "recall", "avg_precision", "cg", "dcg", "ndcg", "rbp", "err"))
+    set_names(c("Precision", "Recall", "Avg precision", "CG", "DCG", "nDCG", "RBP", "ERR"))
 
 ggplotter <- function(data) {
-    p <- ggplot(data, aes(n, value, color = measure)) +
+    p <- ggplot(data, aes(n, value, color = metric)) +
         geom_path(size = 3) +
-        scale_color_manual(values = colores) +
+        scale_color_manual(values = colores, labels = color_labels()) +
         scale_x_continuous(breaks = 1:10) +
         theme_minimal()
     
@@ -19,7 +20,7 @@ ggplotter <- function(data) {
 
 
 # Define UI for application that draws a histogram
-ui <- fluidPage(
+ui <- fluidPage(theme = shinytheme("paper"),
 
     # Application title
     titlePanel("Visualizing ranking metrics"),
@@ -36,21 +37,18 @@ ui <- fluidPage(
             fluidRow(
                 column(width = 3, offset = 1,
                        checkboxGroupInput("set_metrics", "Set-based metrics:",
-                                          choiceValues = c("precision", "recall", "avg_precision"),
-                                          selected = c("precision", "recall", "avg_precision"),
-                                          choiceNames = c("Precision", "Recall", "Average precision")
+                                          choices = c("Precision", "Recall", "Avg precision"),
+                                          selected = c("Precision", "Recall", "Avg precision")
                                           )
                        ),
                 column(width = 3, offset = 1,
                        checkboxGroupInput("rank_metrics", "Rank-based metrics:",
-                                          choiceValues = c("dcg", "ndcg"),
-                                          choiceNames = c("DCG", "nDCG")
+                                          choices = c("DCG", "nDCG")
                                           )
                 ),
                 column(width = 3, offset = 1,
                       checkboxGroupInput("user_metrics", "User-based metrics:",
-                                         choiceValues = c("rbp", "err"),
-                                         choiceNames = c("RBP(p=0.8)", "ERR")
+                                         choices = c("RBP(p=0.8)", "ERR")
                                          )
                 )
             ),
@@ -104,21 +102,21 @@ server <- function(input, output) {
         dat <- tibble(n = 1:10) %>% 
             rowwise() %>% 
             mutate(
-                precision = precision(n, docs > 2),
-                recall = recall(n, docs > 2),
-                avg_precision = avg_precision(n, docs > 2),
-                cg = cg(n, docs),
-                dcg = dcg(n, docs),
-                ndcg = ndcg(n, docs),
-                err = err(n, docs),
+                Precision = precision(n, docs > 2),
+                Recall = recall(n, docs > 2),
+                `Average precision` = avg_precision(n, docs > 2),
+                `CG`  = cg(n, docs),
+                `DCG` = dcg(n, docs),
+                `nDCG` = ndcg(n, docs),
+                `ERR` = err(n, docs),
                 sat = prob_satisfied(n, docs),
-                rbp = rbp(n, docs, .8)
+                `RBP(p=0.8)` = rbp(n, docs, .8)
             ) %>% 
-            pivot_longer(-n, "measure")
+            pivot_longer(-n, "metric")
         
         
         dat %>%
-            filter(measure %in% c(input$set_metrics, input$rank_metrics, input$user_metrics)) %>% 
+            filter(metric %in% c(input$set_metrics, input$rank_metrics, input$user_metrics)) %>% 
             ggplotter()
 
     })
