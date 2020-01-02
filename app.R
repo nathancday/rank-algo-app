@@ -36,18 +36,22 @@ ui <- fluidPage(
             fluidRow(
                 column(width = 3, offset = 1,
                        checkboxGroupInput("set_metrics", "Set-based metrics:",
-                                          choices = c("precision", "recall", "avg_precision"),
+                                          choiceValues = c("precision", "recall", "avg_precision"),
                                           selected = c("precision", "recall", "avg_precision"),
+                                          choiceNames = c("Precision", "Recall", "Average precision")
                                           )
                        ),
                 column(width = 3, offset = 1,
                        checkboxGroupInput("rank_metrics", "Rank-based metrics:",
-                                          choices = c("dcg", "ndcg")
+                                          choiceValues = c("dcg", "ndcg"),
+                                          choiceNames = c("DCG", "nDCG")
                                           )
                 ),
                 column(width = 3, offset = 1,
                       checkboxGroupInput("user_metrics", "User-based metrics:",
-                                         choices = c("rbp", "err"))
+                                         choiceValues = c("rbp", "err"),
+                                         choiceNames = c("RBP(p=0.8)", "ERR")
+                                         )
                 )
             ),
             fluidRow(
@@ -108,7 +112,7 @@ server <- function(input, output) {
                 ndcg = ndcg(n, docs),
                 err = err(n, docs),
                 sat = prob_satisfied(n, docs),
-                rbp = rbp(n, docs, .9)
+                rbp = rbp(n, docs, .8)
             ) %>% 
             pivot_longer(-n, "measure")
         
