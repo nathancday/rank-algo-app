@@ -15,7 +15,7 @@ ggplotter <- function(data) {
         geom_path(size = 1) +
         scale_color_manual(values = colores) +
         scale_x_continuous(breaks = 1:10) +
-        theme_minimal() +
+        theme_minimal(base_size = 16) +
         labs(y = "Value", x = "@ Position")
     
     ggplotly(p)
@@ -26,11 +26,12 @@ ggplotter <- function(data) {
 ui <- fluidPage(theme = shinytheme("paper"),
 
     # Application title
-    titlePanel("Visualizing IR evaluation measures"),
+    titlePanel("Visualizing search metrics"),
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
+            actionButton("help_btn", "", icon = icon("info-circle")),
             DTOutput("judgmentsTable"),
             actionButton("resample_btn", "Resample Documents", icon = icon("vial"))
         ),
@@ -41,7 +42,7 @@ ui <- fluidPage(theme = shinytheme("paper"),
                 column(width = 3, offset = 1,
                        checkboxGroupInput("set_metrics", "Set-based metrics:",
                                           choices = c("Precision", "Recall", "Avg precision"),
-                                          selected = c("Precision", "Recall", "Avg precision")
+                                          selected = c("Precision", "Recall")
                                           )
                        ),
                 column(width = 3, offset = 1,
@@ -65,19 +66,20 @@ ui <- fluidPage(theme = shinytheme("paper"),
 # Define server logic required to draw a histogram
 server <- function(input, output) {
     
-    showModal(
-        modalDialog(
-            p("Re-arrange the document results (by clicking & dragging on the Position column or using the sorting arrows on column titles ) to see how different
+    modalHelp <-  modalDialog(
+        p("Re-arrange the document results (by clicking & dragging on the Position column or using the sorting arrows on column titles ) to see how different
               rank metrics perform as the ranking changes."),
-            p("For metrics that operate on binary relevance grades, grades of 4 and 3 are considered 'Relevant' and 2, 1, and 0 are considerd 'Not-relevant'."),
-            a("Learn more about these metrics on Wikipedia.", href = "https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)"),
-            title = "Visualizing IR evaluation measures",
-            easyClose = TRUE
-            )
+        p("For metrics that operate on binary relevance grades, grades of 4 and 3 are considered 'Relevant' and 2, 1, and 0 are considerd 'Not-relevant'."),
+        a("Learn more about these metrics on Wikipedia.", href = "https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)"),
+        title = "Visualizing search metrics",
+        easyClose = TRUE
     )
     
-    .at <- 5 # rank at which to perform evaluation metrics
-    max_judge <- 4 # best relevance score possible
+    showModal(modalHelp)
+    
+    observeEvent(input$help_btn, {
+        showModal(modalHelp)
+    })
     
     rv <- reactiveValues()
     
