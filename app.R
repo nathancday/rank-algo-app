@@ -1,19 +1,22 @@
 library(shinythemes)
 library(plotly)
+library(DT)
 library(tidyverse)
 library(shiny)
 
 source("algo_scratch.R")
 
 colores <- RColorBrewer::brewer.pal(8, "Dark2") %>% 
-    set_names(c("Precision", "Recall", "Avg precision", "CG", "DCG", "nDCG", "RBP", "ERR"))
+    set_names(c("Precision", "Recall", "Avg precision", "CG", "DCG", "nDCG", "RBP(p=0.8)", "ERR"))
 
 ggplotter <- function(data) {
-    p <- ggplot(data, aes(n, value, color = metric)) +
-        geom_path(size = 3) +
-        scale_color_manual(values = colores, labels = color_labels()) +
+    p <- ggplot(data, aes(position, value, color = metric)) +
+        geom_point(size = 4) +
+        geom_path(size = 1) +
+        scale_color_manual(values = colores) +
         scale_x_continuous(breaks = 1:10) +
-        theme_minimal()
+        theme_minimal() +
+        labs(y = "Value", x = "@ Position")
     
     ggplotly(p)
 }
@@ -23,13 +26,13 @@ ggplotter <- function(data) {
 ui <- fluidPage(theme = shinytheme("paper"),
 
     # Application title
-    titlePanel("Visualizing ranking metrics"),
+    titlePanel("Visualizing IR evaluation measures"),
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
-            actionButton("resample_btn", "Resample Documents", icon = icon("vial")),
-            DT::DTOutput("judgmentsTable")
+            DTOutput("judgmentsTable"),
+            actionButton("resample_btn", "Resample Documents", icon = icon("vial"))
         ),
 
         # Show a plot of the generated distribution
@@ -61,21 +64,33 @@ ui <- fluidPage(theme = shinytheme("paper"),
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+    
+    showModal(
+        modalDialog(
+            p("Re-arrange the document results (by clicking & dragging on the Position column or using the sorting arrows on column titles ) to see how different
+              rank metrics perform as the ranking changes."),
+            p("For metrics that operate on binary relevance grades, grades of 4 and 3 are considered 'Relevant' and 2, 1, and 0 are considerd 'Not-relevant'."),
+            a("Learn more about these metrics on Wikipedia.", href = "https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)"),
+            title = "Visualizing IR evaluation measures",
+            easyClose = TRUE
+            )
+    )
+    
     .at <- 5 # rank at which to perform evaluation metrics
     max_judge <- 4 # best relevance score possible
     
     rv <- reactiveValues()
     
     observeEvent(input$resample_btn, {
-        docs <- sample(0:4, 10, replace = TRUE)
+        docs <- sample(0:4, 10, replace = TRUE, prob = c(.1, .2, .2, .3, .2))
         rv$docs <- tibble(doc_id = paste0("doc", 1:length(docs)),
                           judgment = docs)
     }, ignoreNULL = FALSE)
     
-    output$judgmentsTable <- DT::renderDT(server = FALSE, {
-        DT::datatable(
+    output$judgmentsTable <- renderDT(server = FALSE, {
+        datatable(
             rv$docs,
-            colnames = c("Rank" = 1, "Doc ID" = 2, "Relevance Score" = 3),
+            colnames = c("Position" = 1, "Doc ID" = 2, "Relevance Score (0-4)" = 3),
             extensions = "RowReorder",
             options = list(
                 rowReorder = TRUE,
@@ -83,12 +98,12 @@ server <- function(input, output) {
                 dom = "t",
                 pageLength = input$n
             ),
-            callback=DT::JS(
+            callback=JS(
                 "table.on('row-reorder', function(e, details, changes) {
                     Shiny.onInputChange('table_row_reorder', JSON.stringify(details));
                 });"
             ),
-            selection = "none",
+            selection = "none"
             )
         }
     )
@@ -97,14 +112,13 @@ server <- function(input, output) {
         req(rv$docs)
         
         docs <- rv$docs$judgment[input$judgmentsTable_rows_current]
-        print(docs)
         
         dat <- tibble(n = 1:10) %>% 
             rowwise() %>% 
             mutate(
                 Precision = precision(n, docs > 2),
                 Recall = recall(n, docs > 2),
-                `Average precision` = avg_precision(n, docs > 2),
+                `Avg precision` = avg_precision(n, docs > 2),
                 `CG`  = cg(n, docs),
                 `DCG` = dcg(n, docs),
                 `nDCG` = ndcg(n, docs),
@@ -112,8 +126,8 @@ server <- function(input, output) {
                 sat = prob_satisfied(n, docs),
                 `RBP(p=0.8)` = rbp(n, docs, .8)
             ) %>% 
-            pivot_longer(-n, "metric")
-        
+            pivot_longer(-n, "metric") %>% 
+            rename(position = n)
         
         dat %>%
             filter(metric %in% c(input$set_metrics, input$rank_metrics, input$user_metrics)) %>% 
