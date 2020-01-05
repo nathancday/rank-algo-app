@@ -76,8 +76,8 @@ ui <- fluidPage(theme = shinytheme("paper"),
 server <- function(input, output) {
     
     modalHelp <-  modalDialog(
-        p("Re-arrange the document results (by clicking & dragging on the Position column or using the sorting arrows on column titles ) to see how different
-              rank metrics perform as the ranking changes."),
+        p("Re-arrange the document results to see how different rank metrics
+          perform at differnt positions. Click-and-drag in the 'Position' column or use the sorting arrows next to the column title."),
         p("For metrics that operate on binary relevance grades, grades of 4 and 3 are considered 'Relevant' and 2, 1, and 0 are considerd 'Not-relevant'."),
         a("Learn more about these metrics on Wikipedia.", href = "https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)"),
         a(href = "https://opensourceconnections.com/",
@@ -122,6 +122,11 @@ server <- function(input, output) {
                 });"
             ),
             selection = "none"
+            ) %>% 
+            formatStyle(
+                "Position",
+                backgroundColor = "#2196F3",
+                color = "white"
             )
         }
     )
