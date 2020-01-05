@@ -18,7 +18,7 @@ ggplotter <- function(data) {
         theme_minimal(base_size = 16) +
         labs(y = "Value", x = "@ Position")
     
-    ggplotly(p)
+    ggplotly(p) %>% config(displayModeBar = FALSE)
 }
 
 
@@ -31,9 +31,9 @@ ui <- fluidPage(theme = shinytheme("paper"),
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
-            actionButton("help_btn", "", icon = icon("info-circle")),
+            actionButton("help_btn", "Info", icon = icon("info-circle"), style = "margin:10px"),
             DTOutput("judgmentsTable"),
-            actionButton("resample_btn", "Resample Documents", icon = icon("vial"))
+            actionButton("resample_btn", "Resample Documents", icon = icon("vial"), style = "margin:10px;"),
         ),
 
         # Show a plot of the generated distribution
@@ -58,6 +58,15 @@ ui <- fluidPage(theme = shinytheme("paper"),
             ),
             fluidRow(
                 plotlyOutput("setPlot")
+            ),
+            fluidRow(
+                a(href = "https://opensourceconnections.com/",
+                  style = "float:right;padding:25px",
+                    img(src = "https://avatars1.githubusercontent.com/u/339001?s=200&v=4",
+                        alt = "OSC logo",
+                        width = 50,
+                        height = 50)
+                )
             )
         )
     )
@@ -71,6 +80,13 @@ server <- function(input, output) {
               rank metrics perform as the ranking changes."),
         p("For metrics that operate on binary relevance grades, grades of 4 and 3 are considered 'Relevant' and 2, 1, and 0 are considerd 'Not-relevant'."),
         a("Learn more about these metrics on Wikipedia.", href = "https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)"),
+        a(href = "https://opensourceconnections.com/",
+          img(src = "https://avatars1.githubusercontent.com/u/339001?s=200&v=4",
+              alt = "OSC logo",
+              width = 50,
+              height = 50
+          )
+        ),
         title = "Visualizing search metrics",
         easyClose = TRUE
     )
@@ -121,11 +137,11 @@ server <- function(input, output) {
                 Precision = precision(n, docs > 2),
                 Recall = recall(n, docs > 2),
                 `Avg precision` = avg_precision(n, docs > 2),
-                `CG`  = cg(n, docs),
-                `DCG` = dcg(n, docs),
-                `nDCG` = ndcg(n, docs),
-                `ERR` = err(n, docs),
-                sat = prob_satisfied(n, docs),
+                CG  = cg(n, docs),
+                DCG = dcg(n, docs),
+                nDCG = ndcg(n, docs),
+                ERR = err(n, docs),
+                sat = satisfied_at(n, docs),
                 `RBP(p=0.8)` = rbp(n, docs, .8)
             ) %>% 
             pivot_longer(-n, "metric") %>% 

@@ -2,7 +2,8 @@
 # g_max <- 5
 # 
 # ((2^g) - 1 ) / (2^g_max)
-docs <- c(.99, .8, .5, .25) # relevancy scores for docs
+# docs <- c(.99, .8, .5, .25) # relevancy scores for docs
+docs <- c(4,3,4,2,3,2,3,4,3,2,1)
 
 
 # Precision ---------------------------------------------------------------
@@ -53,54 +54,60 @@ avg_precision <- function(r, docs) {
 
 avg_precision(2, docs > .5)
 
-# satisfied -------
+grade_to_prob <- function(score, max) ((2^score) - 1) / (2^max)
+grade_to_prob(3, 4)
 
-#' @param r The rank of a document in results set
-#' @param docs The relevancy scores of the doc set
-prob_satisfied <- function(r, docs) {
-  
-  doc_subset <- docs[1:r]
-  
-  scores_to_prod <- vector("numeric", length(doc_subset))
-  
-  for (i in seq_along(doc_subset)) {
-    if (i == 1) {
-      scores_to_prod[i] <- doc_subset[i]
-    } else {
-      scores_to_prod[i] <- (1-docs[i-1]) * docs[i]
-    }
-  }
-  
-  prod(scores_to_prod)
+
+
+# ERR -------
+# from Chapelle
+# split into multiple functions
+
+gain <- function(doc, max_grade = 4) {
+  ((2^doc) - 1) / (2^max_grade)
 }
 
-prob_satisfied(3, docs)
+satisfied_at <- function(r, docs, max_grade = 4) {
+  rels <- numeric(length(r))
+  before_w <- 1
+  for (p in 1:r) {
+    pos_gain <- gain(docs[p], max_grade)
+    rels[p] <- before_w * pos_gain
+    before_w <- 1- pos_gain
+  }
+  prod(rels)
+}
 
-# utility ---------
+satisfied_at(1, docs)
+satisfied_at(3, docs)
+
+map_dbl(1:10, ~satisfied_at(., docs))
+
+
 # this could be any function `f(rank)` that goes from 1 >>> 0 as rank >>> Inf
-
-utility <- function(r) 1 / r # from Chapelle
+utility <- function(r) {
+  1 / r
+}
 
 utility(2)
 
-# Expected reciprocal rank ------------------------------------------------------
-
-err <- function(r, docs) {
-  
-  doc_subset <- docs[1:r]
-  
-  scores_to_sum <- vector("numeric", length = length(doc_subset))
-  
-  for (i in seq_along(doc_subset)) {
-    scores_to_sum[i] <- utility(i) * prob_satisfied(i, doc_subset[1:i])
+err <- function(r, docs, max_grade = 4) {
+  to_sum <- numeric(r)
+  for (i in 1:r) {
+    sat_at <- satisfied_at(i, docs, max_grade)
+    to_sum[i] <- utility(i) * sat_at
   }
-  
-  sum(scores_to_sum)
-  
+  sum(to_sum)
 }
 
-err(4, docs)
 
+err(1, docs)
+err(2, docs)
+err(3, docs)
+err(4, docs)
+err(5, docs)
+
+err(2, rev(docs))
 
 # Cumulative Gain ---------------------------------------------------------
 
