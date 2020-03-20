@@ -42,10 +42,10 @@ recall(1, docs > .5)
 avg_precision <- function(r, docs) {
   doc_subset <- docs[1:r]
   
-  vals_to_avg <- vector("numeric", length(doc_subset))
+  vals_to_avg <- vector("numeric", sum(doc_subset))
     
   for (i in seq_along(doc_subset)) {
-    vals_to_avg[i] <- precision(i, doc_subset)
+    vals_to_avg[i] <- precision(i, doc_subset) *doc_subset[i]
   }
   
   sum(vals_to_avg) / length(doc_subset)

@@ -102,13 +102,14 @@ server <- function(input, output) {
     observeEvent(input$resample_btn, {
         docs <- sample(0:4, 10, replace = TRUE, prob = c(.1, .2, .2, .3, .2))
         rv$docs <- tibble(doc_id = paste0("doc", 1:length(docs)),
-                          judgment = docs)
+                          judgment = docs,
+                          judgment2 = ifelse(docs > 2, "relevant", "not relevant"))
     }, ignoreNULL = FALSE)
     
     output$judgmentsTable <- renderDT(server = FALSE, {
         datatable(
             rv$docs,
-            colnames = c("Position" = 1, "Doc ID" = 2, "Relevance Score (0-4)" = 3),
+            colnames = c("Position" = 1, "Doc ID" = 2, "Graded (0-4) Relevance" = 3, "Binary Relevance" = 4),
             extensions = "RowReorder",
             options = list(
                 rowReorder = TRUE,
@@ -133,6 +134,7 @@ server <- function(input, output) {
     
     output$setPlot <- renderPlotly({
         req(rv$docs)
+        req(input$judgmentsTable_rows_current)
         
         docs <- rv$docs$judgment[input$judgmentsTable_rows_current]
         
