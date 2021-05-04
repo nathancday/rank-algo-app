@@ -123,9 +123,24 @@ cg(2, docs)
 
 # Discount cumulative gain ---------------------------------------------------------
 # goal: reward systems that put highly ranked docs first
-# useful as an evaluation metric for differnent boosting strategies
+# useful as an evaluation metric for different boosting strategies
+# two formulas on wikipedia: https://en.wikipedia.org/wiki/Discounted_cumulative_gain#Discounted_Cumulative_Gain
 
 dcg <- function(r, docs) {
+  
+  doc_subset <- docs[1:r]
+  
+  scores_to_sum <- vector("numeric", length(doc_subset))
+  
+  for (i in seq_along(doc_subset)) {
+    
+    scores_to_sum[i] <- docs[i] / log(i + 1, base = 2)
+    
+  }
+  sum(scores_to_sum)
+}
+
+dcg2 <- function(r, docs) {
   
   doc_subset <- docs[1:r]
   
@@ -139,11 +154,11 @@ dcg <- function(r, docs) {
   sum(scores_to_sum)
 }
 
-dcg(2, docs)
+dcg2(2, docs)
 
 bad_docs <- rev(docs)
 
-dcg(2, bad_docs)
+dcg2(2, bad_docs)
 
 # Normalized DCG ---------------------------------------------------------
 # goal: Pull DCG back into 0-1 range
