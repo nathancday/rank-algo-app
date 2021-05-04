@@ -79,7 +79,7 @@ server <- function(input, output) {
   modalHelp <-  modalDialog(
     p("Re-arrange the document results to see how different rank metrics
           perform at differnt positions. Click-and-drag in the 'Position' column or use the sorting arrows next to the column title."),
-    p("For metrics that operate on binary relevance grades, grades of 4 and 3 are considered 'Relevant' and 2, 1, and 0 are considerd 'Not-relevant'."),
+    p("For metrics that operate on binary relevance grades (marked with *), grades of 4 and 3 are considered 'Relevant' and 2, 1, and 0 are considerd 'Not-relevant'."),
     a("Learn more about these metrics on Wikipedia.", href = "https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)"),
     a(href = "https://opensourceconnections.com/",
       img(src = "https://avatars1.githubusercontent.com/u/339001?s=200&v=4",
