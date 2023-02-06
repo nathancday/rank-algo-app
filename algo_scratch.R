@@ -4,6 +4,7 @@
 # ((2^g) - 1 ) / (2^g_max)
 # docs <- c(.99, .8, .5, .25) # relevancy scores for docs
 docs <- c(4,3,4,2,3,2,3,4,3,2,1)
+docs_binary = c(0,1,0,1,1,0,0,1)
 
 
 # Precision ---------------------------------------------------------------
@@ -17,13 +18,13 @@ precision <- function(r, docs) {
   sum(doc_subset) / length(doc_subset)
 }
 
-precision(4, docs > .5)
-precision(2, docs > .5)
-precision(1, docs > .5)
+precision(4, docs_binary)
+precision(2, docs_binary)
+precision(1, docs_binary)
 
 # Recall ---------------------------------------------------------------
 
-#' requies incoming `docs` are scaled to binary (1 = relevant)
+#' requires incoming `docs` are scaled to binary (1 = relevant)
 #' @param r The rank of a document in results set
 #' @param docs The relevancy scores of the doc set
 recall <- function(r, docs) {
@@ -33,8 +34,8 @@ recall <- function(r, docs) {
   sum(doc_subset) / total_rel
 }
 
-recall(4, docs > .5)
-recall(1, docs > .5)
+recall(4, docs_binary)
+recall(1, docs_binary)
 
 
 # Average Precision -------------------------------------------------------
@@ -42,17 +43,24 @@ recall(1, docs > .5)
 avg_precision <- function(r, docs) {
   doc_subset <- docs[1:r]
   
-  vals_to_avg <- vector("numeric", sum(doc_subset))
+  vals_to_avg <- vector("numeric")
+  count = 0
     
   for (i in seq_along(doc_subset)) {
-    vals_to_avg[i] <- precision(i, doc_subset) *doc_subset[i]
+    if (doc_subset[i] > 0) {
+      count = count + 1
+      vals_to_avg <- c(vals_to_avg, precision(i, doc_subset))
+    }
   }
-  
-  sum(vals_to_avg) / length(doc_subset)
-  
+  sum(vals_to_avg) / count
 }
 
-avg_precision(2, docs > .5)
+avg_precision(2, docs_binary)
+avg_precision(3, docs_binary)
+avg_precision(4, docs_binary)
+avg_precision(5, docs_binary)
+avg_precision(7, docs_binary)
+
 
 grade_to_prob <- function(score, max) ((2^score) - 1) / (2^max)
 grade_to_prob(3, 4)
